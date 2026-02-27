@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Categories · Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    function enableEdit(id) {
+      const input = document.getElementById("input-" + id);
+      input.removeAttribute("readonly");
+      input.classList.remove("bg-slate-100","cursor-not-allowed");
+      input.classList.add("bg-white");
+
+      document.getElementById("save-" + id).classList.remove("hidden");
+      document.getElementById("edit-" + id).classList.add("hidden");
+    }
+  </script>
+</head>
+
+<body class="bg-slate-100 min-h-screen p-6">
+
+<div class="max-w-lg mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Categories</h1>
+      <p class="text-slate-500 text-sm">Manage expense categories</p>
+    </div>
+    <a href="/"
+       class="px-4 py-2 rounded-lg bg-white border hover:bg-slate-50 transition text-sm">
+      ← Back
+    </a>
+  </div>
+
+  <!-- ADD CATEGORY -->
+  <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <h2 class="text-sm font-semibold text-slate-600 mb-3">Add new category</h2>
+
+    <form method="POST" class="flex gap-3">
+      <input name="name"
+             placeholder="e.g. Groceries"
+             class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+             required>
+      <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 rounded-lg">
+        Add
+      </button>
+    </form>
+  </div>
+
+  <!-- CATEGORY LIST -->
+  <div class="bg-white rounded-2xl shadow-sm border divide-y">
+
+    {% for c in categories %}
+    <form method="POST"
+          action="/category/edit/{{ c.id }}"
+          class="flex items-center gap-3 p-4">
+
+      <input
+        id="input-{{ c.id }}"
+        name="name"
+        value="{{ c.name }}"
+        readonly
+        class="flex-1 border rounded-lg px-3 py-2 bg-slate-100 cursor-not-allowed">
+
+      <button type="button"
+              id="edit-{{ c.id }}"
+              onclick="enableEdit({{ c.id }})"
+              class="text-indigo-600 text-sm">
+        Edit
+      </button>
+
+      <button id="save-{{ c.id }}"
+              class="text-emerald-600 text-sm hidden">
+        Save
+      </button>
+
+      <a href="/category/delete/{{ c.id }}"
+         onclick="return confirm('Delete this category?')"
+         class="text-red-600 text-sm">
+        Delete
+      </a>
+
+    </form>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+</body>
+</html>

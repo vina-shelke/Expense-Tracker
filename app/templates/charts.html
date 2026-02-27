@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Analytics · Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-slate-100 min-h-screen p-6">
+
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <div class="flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Analytics</h1>
+      <p class="text-slate-500 text-sm">
+        {% if scope == "master" %}All users overview{% else %}Your expense insights{% endif %}
+      </p>
+    </div>
+
+    <a href="/"
+       class="px-4 py-2 rounded-lg bg-white border hover:bg-slate-50 transition text-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="bg-white rounded-2xl shadow-sm border p-4 flex flex-wrap gap-4 items-center justify-between text-sm">
+
+    <!-- SCOPE -->
+    <div class="flex gap-3 items-center">
+      <span class="text-slate-500">Scope:</span>
+
+      <a href="/charts?scope=user&period={{ period }}"
+         class="px-3 py-1 rounded-full {% if scope=='user' %}bg-indigo-600 text-white{% else %}bg-slate-100{% endif %}">
+        My Report
+      </a>
+
+      {% if is_admin %}
+      <a href="/charts?scope=master&period={{ period }}"
+         class="px-3 py-1 rounded-full {% if scope=='master' %}bg-indigo-600 text-white{% else %}bg-slate-100{% endif %}">
+        Master
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- PERIOD -->
+    <div class="flex gap-2 items-center">
+      <span class="text-slate-500">Period:</span>
+
+      {% for p in ['daily','weekly','monthly','yearly'] %}
+      <a href="/charts?scope={{ scope }}&period={{ p }}"
+         class="px-3 py-1 rounded-full {% if period==p %}bg-emerald-600 text-white{% else %}bg-slate-100{% endif %}">
+        {{ p|capitalize }}
+      </a>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- CHARTS -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- CATEGORY PIE -->
+    <div class="bg-white rounded-2xl shadow-sm border p-6">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">
+        Category Breakdown
+      </h2>
+      <canvas id="pieChart"></canvas>
+    </div>
+
+    <!-- TIME BAR -->
+    <div class="bg-white rounded-2xl shadow-sm border p-6">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">
+        {{ period|capitalize }} Expense Trend
+      </h2>
+      <canvas id="barChart"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+new Chart(document.getElementById("pieChart"), {
+  type: "pie",
+  data: {
+    labels: {{ category_data | map(attribute='category') | list | tojson }},
+    datasets: [{
+      data: {{ category_data | map(attribute='total') | list | tojson }}
+    }]
+  }
+});
+
+new Chart(document.getElementById("barChart"), {
+  type: "bar",
+  data: {
+    labels: {{ time_data | map(attribute='period') | list | tojson }},
+    datasets: [{
+      data: {{ time_data | map(attribute='total') | list | tojson }}
+    }]
+  }
+});
+</script>
+
+</body>
+</html>

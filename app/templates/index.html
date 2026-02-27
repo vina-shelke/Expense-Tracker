@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard · Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 min-h-screen p-6">
+
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- ================= HEADER ================= -->
+  <div class="flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Finance Tracker</h1>
+      <p class="text-slate-500 text-sm">Manage and analyze your expenses</p>
+    </div>
+
+    <div class="flex gap-3 text-sm">
+      <a href="/charts"
+         class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+        Charts
+      </a>
+      <a href="/categories"
+         class="px-4 py-2 rounded-lg bg-white border hover:bg-slate-50 transition">
+        Categories
+      </a>
+      <a href="/logout"
+         class="px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition">
+        Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- ================= BUDGET CARD ================= -->
+  <div class="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-slate-800">Monthly Budget</h2>
+      <span class="text-sm text-slate-500">
+        {{ now().strftime('%B %Y') }}
+      </span>
+    </div>
+
+    {% if budget_summary %}
+    <!-- ===== BUDGET VIEW MODE ===== -->
+
+    {% set percent = (budget_summary.spent / budget_summary.budget * 100) %}
+
+    <div class="space-y-3">
+      <div class="flex justify-between text-sm">
+        <span class="text-slate-600">
+          Spent: ₹{{ budget_summary.spent }}
+        </span>
+        <span class="text-slate-600">
+          Budget: ₹{{ budget_summary.budget }}
+        </span>
+      </div>
+
+      <div class="w-full bg-slate-200 rounded-full h-3">
+        <div
+          class="h-3 rounded-full
+                 {% if percent > 100 %}
+                   bg-red-500
+                 {% elif percent > 80 %}
+                   bg-amber-500
+                 {% else %}
+                   bg-emerald-500
+                 {% endif %}"
+          style="width: {{ percent if percent < 100 else 100 }}%">
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button
+          onclick="document.getElementById('editBudgetForm').classList.toggle('hidden')"
+          class="text-indigo-600 text-sm font-medium">
+          Edit Budget
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== EDIT BUDGET FORM (HIDDEN) ===== -->
+    <form id="editBudgetForm"
+          method="POST"
+          action="/budget"
+          class="hidden border-t pt-4 flex flex-wrap gap-3 items-end">
+
+      <input type="hidden"
+             name="month"
+             value="{{ now().strftime('%Y-%m') }}">
+
+      <div>
+        <label class="text-sm text-slate-600">New Budget Amount (₹)</label>
+        <input
+          type="number"
+          step="0.01"
+          name="amount"
+          class="border rounded-lg px-3 py-2"
+          required>
+      </div>
+
+      <button
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+        Save
+      </button>
+    </form>
+
+    {% else %}
+    <!-- ===== NO BUDGET SET ===== -->
+
+    <form method="POST" action="/budget" class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="text-sm text-slate-600">Month</label>
+        <input
+          type="month"
+          name="month"
+          value="{{ now().strftime('%Y-%m') }}"
+          class="border rounded-lg px-3 py-2">
+      </div>
+
+      <div>
+        <label class="text-sm text-slate-600">Budget Amount (₹)</label>
+        <input
+          type="number"
+          step="0.01"
+          name="amount"
+          placeholder="e.g. 20000"
+          class="border rounded-lg px-3 py-2"
+          required>
+      </div>
+
+      <button
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+        Set Budget
+      </button>
+    </form>
+
+    {% endif %}
+  </div>
+
+  <!-- ================= ADD EXPENSE ================= -->
+  <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <h2 class="text-lg font-semibold text-slate-800 mb-4">Add Expense</h2>
+
+    <form method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <input name="title"
+             placeholder="Expense title"
+             class="border rounded-lg px-3 py-2"
+             required>
+
+      <select name="category"
+              class="border rounded-lg px-3 py-2"
+              required>
+        <option value="">Select category</option>
+        {% for c in categories %}
+          <option value="{{ c.name }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+      <input name="amount"
+             type="number"
+             step="0.01"
+             placeholder="Amount"
+             class="border rounded-lg px-3 py-2"
+             required>
+
+      <input name="expense_date"
+             type="date"
+             class="border rounded-lg px-3 py-2">
+
+      <button
+        class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium">
+        Add
+      </button>
+    </form>
+  </div>
+
+  <!-- ================= EXPENSE HISTORY ================= -->
+  <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+    <div class="px-6 py-4 border-b">
+      <h2 class="text-lg font-semibold text-slate-800">Expense History</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="p-4 text-center">Date</th>
+            <th class="p-4 text-left">Title</th>
+            <th class="p-4 text-center">Category</th>
+            <th class="p-4 text-right">Amount</th>
+            <th class="p-4 text-center">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for e in expenses %}
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 text-center">{{ e.expense_date }}</td>
+            <td class="p-4 font-medium">{{ e.title }}</td>
+            <td class="p-4 text-center">
+              <span class="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-600">
+                {{ e.category }}
+              </span>
+            </td>
+            <td class="p-4 text-right font-semibold">₹{{ e.amount }}</td>
+            <td class="p-4 text-center space-x-3">
+              <a href="/expense/edit/{{ e.id }}" class="text-indigo-600">Edit</a>
+              <a href="/expense/delete/{{ e.id }}"
+                 class="text-red-600"
+                 onclick="return confirm('Delete this expense?')">
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= BUDGET EXCEEDED POPUP ================= -->
+{% if budget_alert and budget_alert.exceeded %}
+<div class="fixed inset-0 bg-black/40 flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-6 max-w-sm shadow-xl">
+    <h3 class="text-lg font-semibold text-red-600 mb-2">
+      ⚠ Budget Exceeded
+    </h3>
+    <p class="text-sm text-slate-600 mb-4">
+      You’ve exceeded your monthly budget.
+    </p>
+    <div class="text-sm mb-4">
+      <p>Budget: ₹{{ budget_alert.budget }}</p>
+      <p>Spent: ₹{{ budget_alert.spent }}</p>
+    </div>
+    <button onclick="this.closest('div.fixed').remove()"
+            class="w-full bg-red-600 text-white py-2 rounded-lg">
+      Okay
+    </button>
+  </div>
+</div>
+{% endif %}
+
+</body>
+</html>
