@@ -247,7 +247,7 @@ def set_budget():
     conn.close()
     return redirect("/")
 
-#asdfghjkllmnbv
+
 # ================= EDIT / DELETE EXPENSE =================
 @app.route("/expense/edit/<int:id>", methods=["GET", "POST"])
 @login_required
